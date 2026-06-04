@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: job-comparer
+  datasource:
+    url: your-db-url
+    username: your-db-admin
+    password: your-db-password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+jwt:
+  secret: "your-secret"  # Must be 32 characters or an error occur
+  expiration: 3600000  # 1 hour in ms

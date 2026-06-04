@@ -1,17 +1,29 @@
 package com.yue.jobcomparer.auth;
 
-import lombok.extern.slf4j.Slf4j;
+import com.yue.jobcomparer.dto.AuthResponse;
+import com.yue.jobcomparer.dto.LoginRequest;
+import com.yue.jobcomparer.dto.RegisterRequest;
+import com.yue.jobcomparer.service.AuthService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
-    @GetMapping
-    public ResponseEntity<String> hello() {
-        return ResponseEntity.ok("Hello Spring Boot!");
+    private final AuthService authService;
+
+    @PostMapping("/register")
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
+        return ResponseEntity.ok(authService.register(request));
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+        return ResponseEntity.ok(authService.login(request));
     }
 }
