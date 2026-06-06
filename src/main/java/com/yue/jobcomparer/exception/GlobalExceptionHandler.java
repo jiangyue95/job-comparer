@@ -2,7 +2,6 @@ package com.yue.jobcomparer.exception;
 
 import com.yue.jobcomparer.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,8 +27,22 @@ public class GlobalExceptionHandler {
 
     // 409 - limit exceeded
     @ExceptionHandler(CvLimitExceededException.class)
-    public ResponseEntity<ErrorResponse> handleCvLimitExceed(
+    public ResponseEntity<ErrorResponse> handleCvLimitExceeded(
             CvLimitExceededException ex, HttpServletRequest request) {
+        return buildError(HttpStatus.CONFLICT, ex.getMessage(), request);
+    }
+
+    // 404 - job not found
+    @ExceptionHandler(JobNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleJobNotFound(
+            JobNotFoundException ex, HttpServletRequest request) {
+        return buildError(HttpStatus.NOT_FOUND, ex.getMessage(), request);
+    }
+
+    // 409 - job limit exceeded
+    @ExceptionHandler(JobLimitExceededException.class)
+    public ResponseEntity<ErrorResponse> handleJobLimitExceeded(
+            JobLimitExceededException ex, HttpServletRequest request) {
         return buildError(HttpStatus.CONFLICT, ex.getMessage(), request);
     }
 
