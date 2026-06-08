@@ -2,7 +2,6 @@ package com.yue.jobcomparer.exception;
 
 import com.yue.jobcomparer.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +9,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -28,8 +28,22 @@ public class GlobalExceptionHandler {
 
     // 409 - limit exceeded
     @ExceptionHandler(CvLimitExceededException.class)
-    public ResponseEntity<ErrorResponse> handleCvLimitExceed(
+    public ResponseEntity<ErrorResponse> handleCvLimitExceeded(
             CvLimitExceededException ex, HttpServletRequest request) {
+        return buildError(HttpStatus.CONFLICT, ex.getMessage(), request);
+    }
+
+    // 404 - job not found
+    @ExceptionHandler(JobNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleJobNotFound(
+            JobNotFoundException ex, HttpServletRequest request) {
+        return buildError(HttpStatus.NOT_FOUND, ex.getMessage(), request);
+    }
+
+    // 409 - job limit exceeded
+    @ExceptionHandler(JobLimitExceededException.class)
+    public ResponseEntity<ErrorResponse> handleJobLimitExceeded(
+            JobLimitExceededException ex, HttpServletRequest request) {
         return buildError(HttpStatus.CONFLICT, ex.getMessage(), request);
     }
 
@@ -72,6 +86,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleIllegalArgument(
             IllegalArgumentException ex, HttpServletRequest request) {
         return buildError(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+    }
+
+    // 400 - invalid enum value or type mismatch in query/path parameter
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(
+            MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
+        String message = "Invalid value '" + ex.getValue() + "' for parameter '" + ex.getName() + "'";
+        return buildError(HttpStatus.BAD_REQUEST, message, request);
     }
 
     // 500 - catch-all for unexpected exceptions
