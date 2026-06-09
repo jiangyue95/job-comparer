@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class JobCvAnalysis {
+public class Analysis {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
