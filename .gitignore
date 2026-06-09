@@ -42,3 +42,7 @@ build/
 **/src/main/resources/application*.yaml
 !**/src/main/resources/application.example*.properties
 !**/src/main/resources/application.example*.yaml
+
+### Environment variable ###
+.env
+*.env
