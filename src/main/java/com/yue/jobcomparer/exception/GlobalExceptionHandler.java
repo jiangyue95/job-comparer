@@ -96,6 +96,18 @@ public class GlobalExceptionHandler {
         return buildError(HttpStatus.BAD_REQUEST, message, request);
     }
 
+    // 502 - AI response parse error
+    @ExceptionHandler(AiResponseParseException.class)
+    public ResponseEntity<ErrorResponse> handleAiResponseParseException(
+            AiResponseParseException ex, HttpServletRequest request) {
+        log.error("AI response parse error", ex);
+        return buildError(
+                HttpStatus.BAD_GATEWAY,
+                "AI service returned an invalid response. Please try again.",
+                request
+        );
+    }
+
     // 500 - catch-all for unexpected exceptions
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpected(
