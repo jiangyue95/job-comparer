@@ -4,7 +4,7 @@ public enum JobStatus {
     SAVED,
     APPLIED,
     INTERVIEWING,
-    OFFERER,
+    OFFERED,
     REJECTED,
     DECLINED,
     ARCHIVED
