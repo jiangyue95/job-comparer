@@ -30,8 +30,13 @@ public class AuthService {
             throw new IllegalArgumentException("Email already registered: " + request.getEmail());
         }
 
+        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
+            throw new IllegalArgumentException("Username already registered: " + request.getUsername());
+        }
+
         User user = User.builder()
                 .email(request.getEmail())
+                .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .build();
         userRepository.save(user);
