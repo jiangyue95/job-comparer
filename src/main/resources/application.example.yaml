@@ -6,14 +6,58 @@ spring:
     username: your-db-admin
     password: your-db-password
     driver-class-name: org.postgresql.Driver
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 1
+    baseline-description: "init"
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: true
     properties:
       hibernate:
         format_sql: true
+  ai:
+    anthropic:
+      api-key: ${ANTHROPIC_API_KEY}
+      chat:
+        options:
+          model: claude-sonnet-4-5
+          temperature: 0.7
+          max-tokens: 2048
 
 jwt:
   secret: "your-secret"  # Must be 32 characters or an error occur
+  expiration: 3600000  # 1 hour in msspring:
+  application:
+    name: job-comparer
+  datasource:
+    url: your-db-url
+    username: your-db-admin
+    password: your-db-password
+    driver-class-name: org.postgresql.Driver
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 1
+    baseline-description: "init"
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  ai:
+    anthropic:
+      api-key: ${ANTHROPIC_API_KEY}
+      chat:
+        options:
+          model: claude-sonnet-4-5
+          temperature: 0.7
+          max-tokens: 2048
+
+jwt:
+  secret: "your-secret"  # Must be 32 characters or an error occurs
   expiration: 3600000  # 1 hour in ms
