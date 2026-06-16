@@ -39,9 +39,7 @@ build/
 
 ### Spring Boot ###
 **/src/main/resources/application*.properties
-**/src/main/resources/application*.yaml
 !**/src/main/resources/application.example*.properties
-!**/src/main/resources/application.example*.yaml
 
 ### Environment variable ###
 .env
