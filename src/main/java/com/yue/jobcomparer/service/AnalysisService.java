@@ -13,13 +13,18 @@ import com.yue.jobcomparer.entity.User;
 import com.yue.jobcomparer.exception.AiResponseParseException;
 import com.yue.jobcomparer.exception.CvNotFoundException;
 import com.yue.jobcomparer.exception.JobNotFoundException;
+import com.yue.jobcomparer.exception.RateLimitExceededException;
 import com.yue.jobcomparer.repository.AnalysisRepository;
 import com.yue.jobcomparer.repository.CvRepository;
 import com.yue.jobcomparer.repository.JobRepository;
 import com.yue.jobcomparer.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Slf4j
 @Service
@@ -31,6 +36,12 @@ public class AnalysisService {
     private final AnalysisRepository analysisRepository;
     private final AiClient aiClient;
     private final ObjectMapper objectMapper;
+
+    @Value("${app.analysis.daily-limit-per-user}")
+    private int dailyLimitPerUser;
+
+    @Value("${app.analysis.daily-limit-global}")
+    private int dailyLimitGlobal;
 
     public AnalysisService(
             AiClient aiClient,
@@ -80,6 +91,22 @@ public class AnalysisService {
     public AnalysisResponse analyze(AnalysisCreateRequest request) {
 
         Long userId = getCurrentUserId();
+
+        // Limit checking
+        LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
+
+        long globalCount = analysisRepository.countByCreatedAtAfter(startOfToday);
+        if (globalCount >= dailyLimitGlobal) {
+            throw new RateLimitExceededException(
+                    "The service has reached its daily capacity. Please try again tomorrow.");
+        }
+
+        long userCount = analysisRepository.countByUserIdAndCreatedAtAfter(userId, startOfToday);
+        if (userCount >= dailyLimitPerUser) {
+            throw new RateLimitExceededException(
+                    "You have reached your daily limit of "
+                            + dailyLimitPerUser + " analyses. Please try again tomorrow.");
+        }
 
         Cv cv = cvRepository.findByIdAndUserIdAndDeletedAtIsNull(request.getCvId(), userId)
                 .orElseThrow(() -> new CvNotFoundException("Cv not found: " + request.getCvId()));

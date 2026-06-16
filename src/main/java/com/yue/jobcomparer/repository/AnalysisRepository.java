@@ -4,6 +4,7 @@ import com.yue.jobcomparer.entity.Analysis;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,4 +16,10 @@ public interface AnalysisRepository extends JpaRepository<Analysis, Long> {
 
     // User views a specific analysis by id
     Optional<Analysis> findByIdAndUserIdAndDeletedAtIsNull(Long id, Long userId);
+
+    // Count a user's analyses created since a given time (for per-user daily limit)
+    long countByUserIdAndCreatedAtAfter(Long userId, LocalDateTime since);
+
+    // Count all analyses created since a given time (for global daily limie)
+    long countByCreatedAtAfter(LocalDateTime since);
 }
