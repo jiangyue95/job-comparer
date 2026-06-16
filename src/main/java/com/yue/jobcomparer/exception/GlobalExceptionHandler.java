@@ -96,6 +96,13 @@ public class GlobalExceptionHandler {
         return buildError(HttpStatus.BAD_REQUEST, message, request);
     }
 
+    // 429 - rate limit exceeded
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ErrorResponse> handleRateLimitExceeded(
+            RateLimitExceededException ex, HttpServletRequest request) {
+        return buildError(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage(), request);
+    }
+
     // 502 - AI response parse error
     @ExceptionHandler(AiResponseParseException.class)
     public ResponseEntity<ErrorResponse> handleAiResponseParseException(
