@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: job_comparer_db
+      POSTGRES_USER: job_comparer
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+
+  backend:
+    build: .
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/job_comparer_db
+      DB_USERNAME: job_comparer
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      SPRING_PROFILES_ACTIVE: prod
+    depends_on:
+      - db
+
+  frontend:
+    image: job-comparer-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
