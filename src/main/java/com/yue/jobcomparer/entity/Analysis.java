@@ -53,6 +53,16 @@ public class Analysis {
     @Column(columnDefinition = "TEXT")
     private String actionableFeedback;
 
+    // === Snapshot of CV/Job identity at analysis time ===
+    @Column(name = "cv_name")
+    private String cvName;
+
+    @Column(name = "job_title")
+    private String jobTitle;
+
+    @Column(name = "company")
+    private String company;
+
     @Column(nullable = false, updatable = false)
     @CreationTimestamp
     private LocalDateTime createdAt;
