@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -141,11 +142,22 @@ public class AnalysisService {
                 .matchedSkills(result.getMatchedSkills())
                 .missingSkills(result.getMissingSkills())
                 .actionableFeedback(result.getActionableFeedback())
+                .cvName(cv.getCvName())
+                .jobTitle(job.getJobTitle())
+                .company(job.getCompany())
                 .build();
 
         Analysis saved = analysisRepository.save(analysis);
 
         return toResponse(saved);
+    }
+
+    public List<AnalysisResponse> getHistory() {
+        Long userId = getCurrentUserId();
+        return analysisRepository.findByUserIdAndDeletedAtIsNullOrderByCreatedAtDesc(userId)
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     private Long getCurrentUserId() {
@@ -164,6 +176,9 @@ public class AnalysisService {
                 .matchedSkills(analysis.getMatchedSkills())
                 .missingSkills(analysis.getMissingSkills())
                 .actionableFeedback(analysis.getActionableFeedback())
+                .cvName(analysis.getCvName())
+                .jobTitle(analysis.getJobTitle())
+                .company(analysis.getCompany())
                 .createdAt(analysis.getCreatedAt())
                 .build();
     }

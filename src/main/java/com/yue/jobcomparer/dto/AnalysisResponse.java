@@ -20,5 +20,8 @@ public class AnalysisResponse {
     private String matchedSkills;
     private String missingSkills;
     private String actionableFeedback;
+    private String cvName;
+    private String jobTitle;
+    private String company;
     private LocalDateTime createdAt;
 }

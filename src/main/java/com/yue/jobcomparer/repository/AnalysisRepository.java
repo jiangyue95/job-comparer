@@ -20,6 +20,6 @@ public interface AnalysisRepository extends JpaRepository<Analysis, Long> {
     // Count a user's analyses created since a given time (for per-user daily limit)
     long countByUserIdAndCreatedAtAfter(Long userId, LocalDateTime since);
 
-    // Count all analyses created since a given time (for global daily limie)
+    // Count all analyses created since a given time (for global daily limit)
     long countByCreatedAtAfter(LocalDateTime since);
 }
