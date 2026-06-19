@@ -1,5 +1,6 @@
 package com.yue.jobcomparer.exception;
 
+import com.yue.jobcomparer.dto.AnalysisResponse;
 import com.yue.jobcomparer.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +20,14 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // 404 - resource not found
+    // 404 - Analysis not found
+    @ExceptionHandler(AnalysisNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleAnalysisNotFound(
+            AnalysisNotFoundException ex, HttpServletRequest request) {
+        return buildError(HttpStatus.NOT_FOUND, ex.getMessage(), request);
+    }
+
+    // 404 - CV not found
     @ExceptionHandler(CvNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleCvNotFound(
             CvNotFoundException ex, HttpServletRequest request) {

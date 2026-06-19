@@ -29,4 +29,11 @@ public class AnalysisController {
     public ResponseEntity<List<AnalysisResponse>> list() {
         return ResponseEntity.ok(analysisService.getHistory());
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        analysisService.deleteAnalysis(id);
+        return ResponseEntity.noContent().build();
+    }
+
 }
