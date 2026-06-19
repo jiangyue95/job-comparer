@@ -10,10 +10,7 @@ import com.yue.jobcomparer.entity.Analysis;
 import com.yue.jobcomparer.entity.Cv;
 import com.yue.jobcomparer.entity.Job;
 import com.yue.jobcomparer.entity.User;
-import com.yue.jobcomparer.exception.AiResponseParseException;
-import com.yue.jobcomparer.exception.CvNotFoundException;
-import com.yue.jobcomparer.exception.JobNotFoundException;
-import com.yue.jobcomparer.exception.RateLimitExceededException;
+import com.yue.jobcomparer.exception.*;
 import com.yue.jobcomparer.repository.AnalysisRepository;
 import com.yue.jobcomparer.repository.CvRepository;
 import com.yue.jobcomparer.repository.JobRepository;
@@ -158,6 +155,14 @@ public class AnalysisService {
                 .stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    public void deleteAnalysis(Long id) {
+        Long userId = getCurrentUserId();
+        Analysis analysis = analysisRepository.findByIdAndUserIdAndDeletedAtIsNull(id, userId)
+                .orElseThrow(() -> new AnalysisNotFoundException("Analysis not found: " + id));
+        analysis.setDeletedAt(LocalDateTime.now());
+        analysisRepository.save(analysis);
     }
 
     private Long getCurrentUserId() {
