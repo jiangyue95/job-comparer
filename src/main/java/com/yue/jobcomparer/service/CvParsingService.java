@@ -88,20 +88,21 @@ public class CvParsingService {
         }
 
         String rawText = extractText(file);
-        String prompt = PROMPT_TEMPLATE.replace("{cv_text}", rawText);
-        String aiResponse = aiClient.chat(prompt, CV_PARSE_MAX_TOKENS);
+//        String prompt = PROMPT_TEMPLATE.replace("{cv_text}", rawText);
+//        String aiResponse = aiClient.chat(prompt, CV_PARSE_MAX_TOKENS);
+//
+//        log.debug("CV parse AI raw response: {}", aiResponse);
 
-        log.debug("CV parse AI raw response: {}", aiResponse);
+//        String cleaned = AiResponseUtils.stripMarkdownFence(aiResponse);
 
-        String cleaned = AiResponseUtils.stripMarkdownFence(aiResponse);
-
-        ParsedCvResponse result;
-        try {
-            result = objectMapper.readValue(cleaned, ParsedCvResponse.class);
-        } catch (JsonProcessingException e) {
-            log.error("Failed to parse CV AI response as JSON: {}", aiResponse, e);
-            throw new AiResponseParseException("AI response could not be parsed as JSON");
-        }
+        ParsedCvResponse result = new ParsedCvResponse();
+        result.setRawText(rawText);
+//        try {
+//            result = objectMapper.readValue(cleaned, ParsedCvResponse.class);
+//        } catch (JsonProcessingException e) {
+//            log.error("Failed to parse CV AI response as JSON: {}", aiResponse, e);
+//            throw new AiResponseParseException("AI response could not be parsed as JSON");
+//        }
 
         if (save) {
             Long userId = securityUtils.getCurrentUserId();

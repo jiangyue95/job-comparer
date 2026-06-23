@@ -23,6 +23,7 @@ public class ParsedCvResponse {
     private List<Project> projects;
     private List<WorkExperience> workExperiences;
     private List<Education> educations;
+    private String rawText;
 
     // Fill only when save=true
     private Long savedCvId;
