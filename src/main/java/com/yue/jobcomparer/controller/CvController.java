@@ -1,15 +1,15 @@
 package com.yue.jobcomparer.controller;
 
-import com.yue.jobcomparer.dto.CvCreateRequest;
-import com.yue.jobcomparer.dto.CvDetailResponse;
-import com.yue.jobcomparer.dto.CvListItemResponse;
-import com.yue.jobcomparer.dto.CvUpdateRequest;
+import com.yue.jobcomparer.dto.*;
+import com.yue.jobcomparer.service.CvParsingService;
 import com.yue.jobcomparer.service.CvService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -19,6 +19,7 @@ import java.util.List;
 public class CvController {
 
     private final CvService cvService;
+    private final CvParsingService cvParsingService;
 
     @PostMapping
     public ResponseEntity<CvDetailResponse> create(@Valid @RequestBody CvCreateRequest request) {
@@ -47,5 +48,13 @@ public class CvController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         cvService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+    @PostMapping(value = "/parse-pdf", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ParsedCvResponse> parsePdf(
+            @RequestPart("file")MultipartFile file,
+            @RequestParam(required = false, defaultValue = "") String cvName,
+            @RequestParam(defaultValue = "false") boolean save
+            ) {
+        return ResponseEntity.ok(cvParsingService.parsePdf(file, cvName, save));
     }
 }

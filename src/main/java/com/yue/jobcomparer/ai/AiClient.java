@@ -8,4 +8,8 @@ public interface AiClient {
      * @return the AI's response as a string
      */
     String chat(String prompt);
+
+    default String chat(String prompt, int maxTokens) {
+        return chat(prompt);
+    }
 }
