@@ -15,6 +15,8 @@ import com.yue.jobcomparer.repository.AnalysisRepository;
 import com.yue.jobcomparer.repository.CvRepository;
 import com.yue.jobcomparer.repository.JobRepository;
 import com.yue.jobcomparer.repository.UserRepository;
+import com.yue.jobcomparer.util.AiResponseUtils;
+import com.yue.jobcomparer.util.SecurityUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -30,10 +32,10 @@ public class AnalysisService {
 
     private final CvRepository cvRepository;
     private final JobRepository jobRepository;
-    private final UserRepository userRepository;
     private final AnalysisRepository analysisRepository;
     private final AiClient aiClient;
     private final ObjectMapper objectMapper;
+    private final SecurityUtils securityUtils;
 
     @Value("${app.analysis.daily-limit-per-user}")
     private int dailyLimitPerUser;
@@ -45,15 +47,15 @@ public class AnalysisService {
             AiClient aiClient,
             CvRepository cvRepository,
             JobRepository jobRepository,
-            UserRepository userRepository,
             AnalysisRepository analysisRepository,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            SecurityUtils securityUtils) {
         this.aiClient = aiClient;
         this.cvRepository = cvRepository;
         this.jobRepository = jobRepository;
-        this.userRepository = userRepository;
         this.analysisRepository = analysisRepository;
         this.objectMapper = objectMapper;
+        this.securityUtils = securityUtils;
     }
 
     private static final String PROMPT_TEMPLATE = """
@@ -88,7 +90,7 @@ public class AnalysisService {
 
     public AnalysisResponse analyze(AnalysisCreateRequest request) {
 
-        Long userId = getCurrentUserId();
+        Long userId = securityUtils.getCurrentUserId();
 
         // Limit checking
         LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
@@ -121,7 +123,7 @@ public class AnalysisService {
 
         log.debug("AI raw response: {}", aiResponse);
 
-        String cleanedResponse = stripMarkdownFence(aiResponse);
+        String cleanedResponse = AiResponseUtils.stripMarkdownFence(aiResponse);
 
         AiAnalysisResult result;
         try {
@@ -150,7 +152,7 @@ public class AnalysisService {
     }
 
     public List<AnalysisResponse> getHistory() {
-        Long userId = getCurrentUserId();
+        Long userId = securityUtils.getCurrentUserId();
         return analysisRepository.findByUserIdAndDeletedAtIsNullOrderByCreatedAtDesc(userId)
                 .stream()
                 .map(this::toResponse)
@@ -158,18 +160,11 @@ public class AnalysisService {
     }
 
     public void deleteAnalysis(Long id) {
-        Long userId = getCurrentUserId();
+        Long userId = securityUtils.getCurrentUserId();
         Analysis analysis = analysisRepository.findByIdAndUserIdAndDeletedAtIsNull(id, userId)
                 .orElseThrow(() -> new AnalysisNotFoundException("Analysis not found: " + id));
         analysis.setDeletedAt(LocalDateTime.now());
         analysisRepository.save(analysis);
-    }
-
-    private Long getCurrentUserId() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalStateException("Authenticated user not found in DB: " + email));
-        return user.getId();
     }
 
     private AnalysisResponse toResponse(Analysis analysis) {
@@ -186,25 +181,5 @@ public class AnalysisService {
                 .company(analysis.getCompany())
                 .createdAt(analysis.getCreatedAt())
                 .build();
-    }
-
-    private String stripMarkdownFence(String response) {
-        if (response == null) {
-            return null;
-        }
-
-        String trimmed = response.trim();
-        if (trimmed.startsWith("```")) {
-            // remove opening fence(e.g., "```json" or "```")
-            int firstNewline = trimmed.indexOf('\n');
-            if (firstNewline != -1) {
-                trimmed = trimmed.substring(firstNewline + 1);
-            }
-            // remove closing fence
-            if (trimmed.endsWith("```")) {
-                trimmed = trimmed.substring(0, trimmed.length() - 3);
-            }
-        }
-        return trimmed.trim();
     }
 }

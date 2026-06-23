@@ -1,5 +1,6 @@
 package com.yue.jobcomparer.ai;
 
+import org.springframework.ai.anthropic.AnthropicChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +17,15 @@ public class AnthropicAiClient implements AiClient{
     public String chat(String prompt) {
         return chatClient.prompt()
                 .user(prompt)
+                .call()
+                .content();
+    }
+
+    @Override
+    public String chat(String prompt, int maxTokens) {
+        return chatClient.prompt()
+                .user(prompt)
+                .options(AnthropicChatOptions.builder().maxTokens(maxTokens).build())
                 .call()
                 .content();
     }

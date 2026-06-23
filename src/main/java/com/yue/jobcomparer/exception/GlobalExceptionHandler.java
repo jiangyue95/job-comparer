@@ -1,6 +1,5 @@
 package com.yue.jobcomparer.exception;
 
-import com.yue.jobcomparer.dto.AnalysisResponse;
 import com.yue.jobcomparer.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -121,6 +120,21 @@ public class GlobalExceptionHandler {
                 "AI service returned an invalid response. Please try again.",
                 request
         );
+    }
+
+    // 422 - PDF parsing failed
+    @ExceptionHandler(PdfParsingException.class)
+    public ResponseEntity<ErrorResponse> handlePdfParsing(
+            PdfParsingException ex, HttpServletRequest request) {
+        log.error("PDF paring failed", ex);
+        return buildError(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage(), request);
+    }
+
+    // 413 - file exceed size limit
+    @ExceptionHandler(FileSizeLimitException.class)
+    public ResponseEntity<ErrorResponse> handleFieldSizeLimit(
+            FileSizeLimitException ex, HttpServletRequest request) {
+        return buildError(HttpStatus.PAYLOAD_TOO_LARGE, ex.getMessage(), request);
     }
 
     // 500 - catch-all for unexpected exceptions
