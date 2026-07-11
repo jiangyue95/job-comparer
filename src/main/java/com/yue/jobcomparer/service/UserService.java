@@ -29,10 +29,16 @@ public class UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
 
+        String avatarUrl = null;
+        if (user.getAvatarKey() != null) {
+            avatarUrl = fileStorage.generatePresignedUrl(user.getAvatarKey());
+        }
+
         return new UserResponse(
                 user.getId(),
                 user.getUsername(),
                 user.getEmail(),
+                avatarUrl,
                 user.getCreatedAt()
         );
     }
