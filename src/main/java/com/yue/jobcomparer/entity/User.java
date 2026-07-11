@@ -28,6 +28,9 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Column
+    private String avatarKey;
+
     @Column(nullable = false)
     private String password;
 
