@@ -10,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -101,6 +102,20 @@ public class GlobalExceptionHandler {
             MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
         String message = "Invalid value '" + ex.getValue() + "' for parameter '" + ex.getName() + "'";
         return buildError(HttpStatus.BAD_REQUEST, message, request);
+    }
+
+    // 400 - invalid avatar exception
+    @ExceptionHandler(InvalidAvatarException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidAvatar(
+            InvalidAvatarException ex, HttpServletRequest request) {
+        return buildError(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+    }
+
+    // 413 - upload exceeds the configured multipart size limit
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxUploadSize(
+            MaxUploadSizeExceededException ex, HttpServletRequest request) {
+        return buildError(HttpStatus.PAYLOAD_TOO_LARGE, "File exceeds the maximum allowed size", request);
     }
 
     // 429 - rate limit exceeded

@@ -37,3 +37,8 @@ app:
 jwt:
   secret: ${JWT_SECRET}
   expiration: 3600000  # 1 hour in ms
+
+aws:
+  s3:
+    region: ${AWS_REGION}
+    bucket: ${AWS_S3_BUCKET}
