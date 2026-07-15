@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
@@ -69,6 +70,19 @@ public class S3StorageOperator implements FileStorage{
 
         PresignedGetObjectRequest presigned = s3Presigner.presignGetObject(presignRequest);
         return presigned.url().toString();
+    }
+
+    @Override
+    public void delete(String key) {
+        DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
+                .bucket(s3Properties.getBucket())
+                .key(key)
+                .build();
+        try {
+            s3Client.deleteObject(deleteObjectRequest);
+        } catch (S3Exception e) {
+            throw new RuntimeException("Failed to delete file from S3, key=" + key, e);
+        }
     }
 
     private String resolveContentType(String contentType) {
