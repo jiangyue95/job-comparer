@@ -44,6 +44,7 @@ public class UserService {
     }
 
     public void updateAvatar(String email, MultipartFile file) {
+
         if (file.isEmpty()) {
             throw new InvalidAvatarException("Avatar file is empty");
         }
@@ -65,11 +66,24 @@ public class UserService {
             throw new InvalidAvatarException("Failed to read avatar file");
         }
 
-        String key = fileStorage.upload(content, file.getOriginalFilename(), contentType);
-
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
-        user.setAvatarKey(key);
+        String oldKey = user.getAvatarKey();
+
+        String newKey = fileStorage.upload(content, file.getOriginalFilename(), contentType);
+
+        user.setAvatarKey(newKey);
         userRepository.save(user);
+
+        // The old object is deleted only after save() has commited. This method is
+        // deliberately not @Transactional: an S3 delete cannot be rolled back, so running
+        // it inside a transaction risks leaving the DB pointing at a deleted object.
+        if (oldKey != null) {
+            try {
+                fileStorage.delete(oldKey);
+            } catch (Exception e) {
+                log.warn("Failed to delete old avatar key={}, user={}", oldKey, email, e);
+            }
+        }
     }
 }
