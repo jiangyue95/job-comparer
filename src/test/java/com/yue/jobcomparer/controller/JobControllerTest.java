@@ -42,6 +42,7 @@ public class JobControllerTest extends AbstractIntegrationTest {
         // create test user and generate token
         User user = User.builder()
                 .email("test@example.com")
+                .username("testuser")
                 .password(passwordEncoder.encode("password123"))
                 .build();
         userRepository.save(user);
@@ -293,6 +294,7 @@ public class JobControllerTest extends AbstractIntegrationTest {
         // Create User B and generate token.
         User userB = User.builder()
                 .email("userB@example.com")
+                .username("testuserb")
                 .password(passwordEncoder.encode("password123"))
                 .build();
         userRepository.save(userB);
@@ -311,6 +313,7 @@ public class JobControllerTest extends AbstractIntegrationTest {
         // Create User B and generate token.
         User userB = User.builder()
                 .email("userB@example.com")
+                .username("testuserb")
                 .password(passwordEncoder.encode("password123"))
                 .build();
         userRepository.save(userB);
@@ -337,6 +340,7 @@ public class JobControllerTest extends AbstractIntegrationTest {
         // Create User B and generate token
         User userB = User.builder()
                 .email("userB@example.com")
+                .username("testuserb")
                 .password(passwordEncoder.encode("password123"))
                 .build();
         userRepository.save(userB);
@@ -358,6 +362,7 @@ public class JobControllerTest extends AbstractIntegrationTest {
 
         User userB = User.builder()
                 .email("userB@example.com")
+                .username("testuserb")
                 .password(passwordEncoder.encode("password456"))
                 .build();
         userRepository.save(userB);

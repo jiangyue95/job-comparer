@@ -12,6 +12,18 @@ spring:
       hibernate:
         format_sql: false
 
+  flyway:
+    enabled: false
+
 jwt:
   secret: "J26Gx*4NB!APWe0V2$r$%OzMGM13gT7$"
   expiration: 3600000
+
+aws:
+  s3:
+    region: eu-west-1
+    bucket: test-bucket
+
+app:
+  admin:
+    email: admin@test.local

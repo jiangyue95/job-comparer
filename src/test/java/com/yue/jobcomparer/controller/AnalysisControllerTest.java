@@ -63,6 +63,7 @@ public class AnalysisControllerTest extends AbstractIntegrationTest {
         // create test user and generate token
         User user = User.builder()
                 .email("test@example.com")
+                .username("testuser")
                 .password(passwordEncoder.encode("password123"))
                 .build();
         userRepository.save(user);
@@ -227,6 +228,7 @@ public class AnalysisControllerTest extends AbstractIntegrationTest {
     void create_withAnotherUsersCv_shouldReturn404() throws Exception {
         User userB = User.builder()
                 .email("userB@example.com")
+                .username("testuserb")
                 .password(passwordEncoder.encode("password123"))
                 .build();
         userRepository.save(userB);
@@ -256,6 +258,7 @@ public class AnalysisControllerTest extends AbstractIntegrationTest {
     void create_withAnotherUsersJob_shouldReturn404() throws Exception {
         User userB = User.builder()
                 .email("userB@example.com")
+                .username("testuserb")
                 .password(passwordEncoder.encode("password123"))
                 .build();
         userRepository.save(userB);
