@@ -3,6 +3,7 @@ package com.yue.jobcomparer.service;
 import com.yue.jobcomparer.dto.AuthResponse;
 import com.yue.jobcomparer.dto.LoginRequest;
 import com.yue.jobcomparer.dto.RegisterRequest;
+import com.yue.jobcomparer.entity.AuditAction;
 import com.yue.jobcomparer.entity.User;
 import com.yue.jobcomparer.repository.UserRepository;
 import com.yue.jobcomparer.util.JwtUtil;
@@ -22,9 +23,10 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
+    private final AuditLogService auditLogService;
 
     @Transactional
-    public AuthResponse register(RegisterRequest request) {
+    public AuthResponse register(RegisterRequest request, String ipAddress) {
 
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new IllegalArgumentException("Email already registered: " + request.getEmail());
@@ -42,10 +44,11 @@ public class AuthService {
         userRepository.save(user);
 
         String token = jwtUtil.generateToken(user.getEmail());
+        auditLogService.record(AuditAction.REGISTER, user.getEmail(), user.getId(), ipAddress);
         return new AuthResponse(token);
     }
 
-    public AuthResponse login(LoginRequest request) {
+    public AuthResponse login(LoginRequest request, String ipAddress) {
 
         try {
             authenticationManager.authenticate(
@@ -55,10 +58,26 @@ public class AuthService {
                     )
             );
         } catch (BadCredentialsException e) {
+            auditLogService.record(
+                    AuditAction.LOGIN_FAILURE,
+                    request.getEmail(),
+                    findUserId(request.getEmail()),
+                    ipAddress);
             throw new IllegalArgumentException("Invalid email or password");
         }
 
         String token = jwtUtil.generateToken(request.getEmail());
+        auditLogService.record(
+                AuditAction.LOGIN_SUCCESS,
+                request.getEmail(),
+                findUserId(request.getEmail()),
+                ipAddress);
         return new AuthResponse(token);
+    }
+
+    private Long findUserId(String email) {
+        return userRepository.findByEmail(email)
+                .map(User::getId)
+                .orElse(null);
     }
 }
