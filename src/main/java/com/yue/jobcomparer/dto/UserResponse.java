@@ -1,5 +1,6 @@
 package com.yue.jobcomparer.dto;
 
+import com.yue.jobcomparer.entity.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,4 +16,5 @@ public class UserResponse {
     private String email;
     private String avatarUrl;
     private LocalDateTime createdAt;
+    private Role role;
 }

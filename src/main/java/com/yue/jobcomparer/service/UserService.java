@@ -39,7 +39,8 @@ public class UserService {
                 user.getUsername(),
                 user.getEmail(),
                 avatarUrl,
-                user.getCreatedAt()
+                user.getCreatedAt(),
+                user.getRole()
         );
     }
 
