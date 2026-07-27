@@ -15,6 +15,7 @@ public class AuditLogResponse {
     private AuditAction action;
     private Long userId;
     private String email;
+    private Long resourceId;
     private String ipAddress;
     private LocalDateTime createdAt;
 }
