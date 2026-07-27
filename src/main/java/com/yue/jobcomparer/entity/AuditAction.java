@@ -1,7 +1,13 @@
 package com.yue.jobcomparer.entity;
 
 public enum AuditAction {
+    // Security events
     LOGIN_SUCCESS,
     LOGIN_FAILURE,
-    REGISTER
+    REGISTER,
+
+    // Business resource changes
+    CV_CREATE,
+    CV_UPDATE,
+    CV_DELETE
 }

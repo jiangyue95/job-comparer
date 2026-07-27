@@ -19,4 +19,10 @@ public class SecurityUtils {
                 .orElseThrow(() -> new IllegalStateException("Authenticated user not found: " + email))
                 .getId();
     }
+
+    public String getCurrentUserEmail() {
+        return SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+    }
 }

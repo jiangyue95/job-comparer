@@ -4,6 +4,7 @@ import com.yue.jobcomparer.dto.CvCreateRequest;
 import com.yue.jobcomparer.dto.CvDetailResponse;
 import com.yue.jobcomparer.dto.CvListItemResponse;
 import com.yue.jobcomparer.dto.CvUpdateRequest;
+import com.yue.jobcomparer.entity.AuditAction;
 import com.yue.jobcomparer.entity.Cv;
 import com.yue.jobcomparer.entity.User;
 import com.yue.jobcomparer.exception.CvLimitExceededException;
@@ -28,6 +29,7 @@ public class CvService {
 
     private final CvRepository cvRepository;
     private final UserRepository userRepository;
+    private final AuditLogService auditLogService;
 
     @Transactional
     public CvDetailResponse create(CvCreateRequest request) {
@@ -54,6 +56,8 @@ public class CvService {
                     "A CV with name '" + request.getCvName() +"' already exists"
             );
         }
+
+        auditLogService.recordResourceEvent(AuditAction.CV_CREATE, cv.getId());
 
         return toDetailResponse(cv);
     }
@@ -90,6 +94,8 @@ public class CvService {
             );
         }
 
+        auditLogService.recordResourceEvent(AuditAction.CV_UPDATE, cv.getId());
+
         return toDetailResponse(cv);
     }
 
@@ -101,6 +107,8 @@ public class CvService {
 
         cv.setDeletedAt(LocalDateTime.now());
         cvRepository.save(cv);
+
+        auditLogService.recordResourceEvent(AuditAction.CV_DELETE, cv.getId());
     }
 
     private Long getCurrentUserId() {

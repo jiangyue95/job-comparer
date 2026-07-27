@@ -44,7 +44,7 @@ public class AuthService {
         userRepository.save(user);
 
         String token = jwtUtil.generateToken(user.getEmail());
-        auditLogService.record(AuditAction.REGISTER, user.getEmail(), user.getId(), ipAddress);
+        auditLogService.recordAuthEvent(AuditAction.REGISTER, user.getEmail(), user.getId(), ipAddress);
         return new AuthResponse(token);
     }
 
@@ -58,7 +58,7 @@ public class AuthService {
                     )
             );
         } catch (BadCredentialsException e) {
-            auditLogService.record(
+            auditLogService.recordAuthEvent(
                     AuditAction.LOGIN_FAILURE,
                     request.getEmail(),
                     findUserId(request.getEmail()),
@@ -67,7 +67,7 @@ public class AuthService {
         }
 
         String token = jwtUtil.generateToken(request.getEmail());
-        auditLogService.record(
+        auditLogService.recordAuthEvent(
                 AuditAction.LOGIN_SUCCESS,
                 request.getEmail(),
                 findUserId(request.getEmail()),

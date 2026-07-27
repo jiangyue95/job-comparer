@@ -36,6 +36,9 @@ public class AuditLog {
     @Column(nullable = false)
     private String email;
 
+    @Column(name = "resource_id")
+    private Long resourceId;
+
     @Column(name = "ip_address", length = 45)
     private String ipAddress;
 
