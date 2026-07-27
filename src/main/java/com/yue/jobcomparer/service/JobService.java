@@ -1,6 +1,7 @@
 package com.yue.jobcomparer.service;
 
 import com.yue.jobcomparer.dto.*;
+import com.yue.jobcomparer.entity.AuditAction;
 import com.yue.jobcomparer.entity.Job;
 import com.yue.jobcomparer.entity.JobStatus;
 import com.yue.jobcomparer.entity.User;
@@ -24,6 +25,7 @@ public class JobService {
 
     private final JobRepository jobRepository;
     private final UserRepository userRepository;
+    private final AuditLogService auditLogService;
 
     @Transactional
     public JobDetailResponse create(JobCreateRequest request) {
@@ -49,6 +51,9 @@ public class JobService {
                 .build();
 
         jobRepository.save(job);
+
+        auditLogService.recordResourceEvent(AuditAction.JOB_CREATE, job.getId());
+
         return toDetailResponse(job);
     }
 
@@ -86,6 +91,9 @@ public class JobService {
         job.setNotes(request.getNotes());
 
         jobRepository.save(job);
+
+        auditLogService.recordResourceEvent(AuditAction.JOB_UPDATE, job.getId());
+
         return toDetailResponse(job);
     }
 
@@ -97,6 +105,9 @@ public class JobService {
 
         job.setStatus(request.getStatus());
         jobRepository.save(job);
+
+        auditLogService.recordResourceEvent(AuditAction.JOB_STATUS_UPDATE, job.getId());
+
         return toDetailResponse(job);
     }
 
@@ -108,6 +119,8 @@ public class JobService {
 
         job.setDeletedAt(LocalDateTime.now());
         jobRepository.save(job);
+
+        auditLogService.recordResourceEvent(AuditAction.JOB_DELETE, job.getId());
     }
 
     private Long getCurrentUserId() {

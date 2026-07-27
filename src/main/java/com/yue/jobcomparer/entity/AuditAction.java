@@ -9,5 +9,10 @@ public enum AuditAction {
     // Business resource changes
     CV_CREATE,
     CV_UPDATE,
-    CV_DELETE
+    CV_DELETE,
+
+    JOB_CREATE,
+    JOB_UPDATE,
+    JOB_STATUS_UPDATE,
+    JOB_DELETE
 }
