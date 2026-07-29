@@ -6,21 +6,17 @@ import com.yue.jobcomparer.ai.AiClient;
 import com.yue.jobcomparer.dto.AiAnalysisResult;
 import com.yue.jobcomparer.dto.AnalysisCreateRequest;
 import com.yue.jobcomparer.dto.AnalysisResponse;
-import com.yue.jobcomparer.entity.Analysis;
-import com.yue.jobcomparer.entity.Cv;
-import com.yue.jobcomparer.entity.Job;
-import com.yue.jobcomparer.entity.User;
+import com.yue.jobcomparer.entity.*;
 import com.yue.jobcomparer.exception.*;
 import com.yue.jobcomparer.repository.AnalysisRepository;
 import com.yue.jobcomparer.repository.CvRepository;
 import com.yue.jobcomparer.repository.JobRepository;
-import com.yue.jobcomparer.repository.UserRepository;
 import com.yue.jobcomparer.util.AiResponseUtils;
 import com.yue.jobcomparer.util.SecurityUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -36,6 +32,8 @@ public class AnalysisService {
     private final AiClient aiClient;
     private final ObjectMapper objectMapper;
     private final SecurityUtils securityUtils;
+    private final AnalysisPersistenceService analysisPersistenceService;
+    private final AuditLogService auditLogService;
 
     @Value("${app.analysis.daily-limit-per-user}")
     private int dailyLimitPerUser;
@@ -49,13 +47,17 @@ public class AnalysisService {
             JobRepository jobRepository,
             AnalysisRepository analysisRepository,
             ObjectMapper objectMapper,
-            SecurityUtils securityUtils) {
+            SecurityUtils securityUtils,
+            AnalysisPersistenceService analysisPersistenceService,
+            AuditLogService auditLogService) {
         this.aiClient = aiClient;
         this.cvRepository = cvRepository;
         this.jobRepository = jobRepository;
         this.analysisRepository = analysisRepository;
         this.objectMapper = objectMapper;
         this.securityUtils = securityUtils;
+        this.analysisPersistenceService = analysisPersistenceService;
+        this.auditLogService = auditLogService;
     }
 
     private static final String PROMPT_TEMPLATE = """
@@ -146,7 +148,7 @@ public class AnalysisService {
                 .company(job.getCompany())
                 .build();
 
-        Analysis saved = analysisRepository.save(analysis);
+        Analysis saved = analysisPersistenceService.saveWithAudit(analysis);
 
         return toResponse(saved);
     }
@@ -159,12 +161,15 @@ public class AnalysisService {
                 .toList();
     }
 
+    @Transactional
     public void deleteAnalysis(Long id) {
         Long userId = securityUtils.getCurrentUserId();
         Analysis analysis = analysisRepository.findByIdAndUserIdAndDeletedAtIsNull(id, userId)
                 .orElseThrow(() -> new AnalysisNotFoundException("Analysis not found: " + id));
         analysis.setDeletedAt(LocalDateTime.now());
         analysisRepository.save(analysis);
+
+        auditLogService.recordResourceEvent(AuditAction.ANALYSIS_DELETE, id);
     }
 
     private AnalysisResponse toResponse(Analysis analysis) {

@@ -14,5 +14,8 @@ public enum AuditAction {
     JOB_CREATE,
     JOB_UPDATE,
     JOB_STATUS_UPDATE,
-    JOB_DELETE
+    JOB_DELETE,
+
+    ANALYSIS_CREATE,
+    ANALYSIS_DELETE
 }
