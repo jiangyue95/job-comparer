@@ -3,6 +3,7 @@ package com.yue.jobcomparer.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yue.jobcomparer.AbstractIntegrationTest;
 import com.yue.jobcomparer.ai.AiClient;
+import com.yue.jobcomparer.ai.AiClientResolver;
 import com.yue.jobcomparer.dto.AnalysisCreateRequest;
 import com.yue.jobcomparer.entity.Cv;
 import com.yue.jobcomparer.entity.Job;
@@ -15,17 +16,18 @@ import com.yue.jobcomparer.repository.UserRepository;
 import com.yue.jobcomparer.util.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.MediaType;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -42,7 +44,9 @@ public class AnalysisControllerTest extends AbstractIntegrationTest {
     @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private JwtUtil jwtUtil;
 
-    @MockitoBean private AiClient aiClient;
+    @MockitoBean private AiClientResolver aiClientResolver;
+
+    private final AiClient mockAiClient = Mockito.mock(AiClient.class);
 
     private String token;
     private Long userId;
@@ -92,8 +96,10 @@ public class AnalysisControllerTest extends AbstractIntegrationTest {
         jobRepository.save(job);
         jobId = job.getId();
 
-        // Stub AiClient to return a fake JSON response by default
-        when(aiClient.chat(anyString())).thenReturn(FAKE_AI_JSON);
+        // Stub the resolver to always return a mocked AiClient, and stub that client
+        // to return a fake JSON response by default
+        when(aiClientResolver.resolve(any())).thenReturn(mockAiClient);
+        when(mockAiClient.chat(anyString())).thenReturn(FAKE_AI_JSON);
     }
 
     // === Happy path ===
@@ -293,7 +299,7 @@ public class AnalysisControllerTest extends AbstractIntegrationTest {
     @Test
     void create_whenAiReturnsMalformedJson_shouldReturn502() throws Exception {
         // Override default stub to simulate AI returning malformed output
-        when(aiClient.chat(anyString())).thenReturn("not a valid json at all");
+        when(mockAiClient.chat(anyString())).thenReturn("not a valid json at all");
 
         AnalysisCreateRequest request = new AnalysisCreateRequest();
         request.setCvId(cvId);

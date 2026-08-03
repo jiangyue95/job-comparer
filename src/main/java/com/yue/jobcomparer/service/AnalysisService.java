@@ -3,6 +3,8 @@ package com.yue.jobcomparer.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yue.jobcomparer.ai.AiClient;
+import com.yue.jobcomparer.ai.AiClientResolver;
+import com.yue.jobcomparer.ai.AiProvider;
 import com.yue.jobcomparer.dto.AiAnalysisResult;
 import com.yue.jobcomparer.dto.AnalysisCreateRequest;
 import com.yue.jobcomparer.dto.AnalysisResponse;
@@ -29,7 +31,7 @@ public class AnalysisService {
     private final CvRepository cvRepository;
     private final JobRepository jobRepository;
     private final AnalysisRepository analysisRepository;
-    private final AiClient aiClient;
+    private final AiClientResolver aiClientResolver;
     private final ObjectMapper objectMapper;
     private final SecurityUtils securityUtils;
     private final AnalysisPersistenceService analysisPersistenceService;
@@ -41,8 +43,11 @@ public class AnalysisService {
     @Value("${app.analysis.daily-limit-global}")
     private int dailyLimitGlobal;
 
+    @Value("${app.ai.default-provider}")
+    private AiProvider defaultProvider;
+
     public AnalysisService(
-            AiClient aiClient,
+            AiClientResolver aiClientResolver,
             CvRepository cvRepository,
             JobRepository jobRepository,
             AnalysisRepository analysisRepository,
@@ -50,7 +55,7 @@ public class AnalysisService {
             SecurityUtils securityUtils,
             AnalysisPersistenceService analysisPersistenceService,
             AuditLogService auditLogService) {
-        this.aiClient = aiClient;
+        this.aiClientResolver = aiClientResolver;
         this.cvRepository = cvRepository;
         this.jobRepository = jobRepository;
         this.analysisRepository = analysisRepository;
@@ -121,6 +126,7 @@ public class AnalysisService {
                 .replace("{job_title}", job.getJobTitle())
                 .replace("{job_description}", job.getJobDescription());
 
+        AiClient aiClient = aiClientResolver.resolve(defaultProvider);
         String aiResponse = aiClient.chat(prompt);
 
         log.debug("AI raw response: {}", aiResponse);
