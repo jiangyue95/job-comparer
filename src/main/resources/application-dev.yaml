@@ -10,3 +10,7 @@ springdoc:
     enabled: true
   swagger-ui:
     enabled: true
+
+logging:
+  level:
+    com.yue.jobcomparer: DEBUG
