@@ -7,6 +7,6 @@ spring:
 
 springdoc:
   api-docs:
-    enable: false
+    enabled: false
   swagger-ui:
-    enable: false
+    enabled: false
