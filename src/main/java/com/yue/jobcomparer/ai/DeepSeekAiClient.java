@@ -1,22 +1,24 @@
 package com.yue.jobcomparer.ai;
 
-import org.springframework.ai.anthropic.AnthropicChatModel;
-import org.springframework.ai.anthropic.AnthropicChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.stereotype.Component;
 
+// DeepSeek exposes an OpenAI-compatible API, so we reuse Spring AI's
+// OpenAI client with base-url pointed at api.deepseek.com.
 @Component
-public class AnthropicAiClient implements AiClient {
+public class DeepSeekAiClient implements AiClient {
 
     private final ChatClient chatClient;
 
-    public AnthropicAiClient(AnthropicChatModel chatModel) {
+    public DeepSeekAiClient(OpenAiChatModel chatModel) {
         this.chatClient = ChatClient.create(chatModel);
     }
 
     @Override
     public AiProvider getProvider() {
-        return AiProvider.ANTHROPIC;
+        return AiProvider.DEEPSEEK;
     }
 
     @Override
@@ -31,7 +33,7 @@ public class AnthropicAiClient implements AiClient {
     public String chat(String prompt, int maxTokens) {
         return chatClient.prompt()
                 .user(prompt)
-                .options(AnthropicChatOptions.builder().maxTokens(maxTokens).build())
+                .options(OpenAiChatOptions.builder().maxTokens(maxTokens).build())
                 .call()
                 .content();
     }

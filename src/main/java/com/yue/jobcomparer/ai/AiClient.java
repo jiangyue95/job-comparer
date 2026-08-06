@@ -2,7 +2,7 @@ package com.yue.jobcomparer.ai;
 
 public interface AiClient {
     /**
-     * Send a prompt to the AI provider and return the raw text reponse.
+     * Send a prompt to the AI provider and return the raw text response.
      *
      * @param prompt the prompt text
      * @return the AI's response as a string
@@ -12,4 +12,6 @@ public interface AiClient {
     default String chat(String prompt, int maxTokens) {
         return chat(prompt);
     }
+
+    AiProvider getProvider();
 }
