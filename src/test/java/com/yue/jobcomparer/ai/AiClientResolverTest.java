@@ -1,6 +1,5 @@
 package com.yue.jobcomparer.ai;
 
-import org.checkerframework.checker.units.qual.A;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -27,7 +26,7 @@ public class AiClientResolverTest {
     }
 
     @Test
-    void create_withUnregisteredProvider_shouldThrowIllegalStateException() {
+    void resolve_withUnregisteredProvider_shouldThrowIllegalStateException() {
         // Arrange
         AiClient anthropic = clientFor(AiProvider.ANTHROPIC);
         AiClientResolver resolver = new AiClientResolver(List.of(anthropic));
