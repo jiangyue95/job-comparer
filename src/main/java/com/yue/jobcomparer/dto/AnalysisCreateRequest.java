@@ -1,5 +1,6 @@
 package com.yue.jobcomparer.dto;
 
+import com.yue.jobcomparer.ai.AiProvider;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
@@ -13,4 +14,6 @@ public class AnalysisCreateRequest {
     @NotNull(message = "jobId is required")
     @Positive(message = "jobId must be positive")
     private Long jobId;
+
+    private AiProvider aiProvider;
 }

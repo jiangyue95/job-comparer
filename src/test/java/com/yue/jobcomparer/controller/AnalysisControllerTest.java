@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yue.jobcomparer.AbstractIntegrationTest;
 import com.yue.jobcomparer.ai.AiClient;
 import com.yue.jobcomparer.ai.AiClientResolver;
+import com.yue.jobcomparer.ai.AiProvider;
 import com.yue.jobcomparer.dto.AnalysisCreateRequest;
 import com.yue.jobcomparer.entity.Cv;
 import com.yue.jobcomparer.entity.Job;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -115,7 +117,26 @@ public class AnalysisControllerTest extends AbstractIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.aiProvider").value("ANTHROPIC"));
+
+        // Verify database state
+        assertThat(analysisRepository.findAll()).hasSize(1);
+    }
+
+    @Test
+    void create_withExplicitProvider_shouldUseAndPersistIt() throws Exception {
+        AnalysisCreateRequest request = new AnalysisCreateRequest();
+        request.setAiProvider(AiProvider.DEEPSEEK);
+        request.setCvId(cvId);
+        request.setJobId(jobId);
+
+        mockMvc.perform(post("/api/analyses")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.aiProvider").value("DEEPSEEK"))
                 .andExpect(jsonPath("$.cvId").value(cvId))
                 .andExpect(jsonPath("$.jobId").value(jobId))
                 .andExpect(jsonPath("$.matchScore").value(75))
@@ -123,6 +144,8 @@ public class AnalysisControllerTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.missingSkills").value("Kafka, Docker"))
                 .andExpect(jsonPath("$.actionableFeedback").value("Add Kafka and Docker to your projects."))
                 .andExpect(jsonPath("$.createdAt").exists());
+
+        verify(aiClientResolver).resolve(AiProvider.DEEPSEEK);
 
         // Verify database state
         assertThat(analysisRepository.findAll()).hasSize(1);
