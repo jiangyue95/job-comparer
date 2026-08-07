@@ -1,6 +1,5 @@
 package com.yue.jobcomparer.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yue.jobcomparer.dto.ParsedCvResponse;
 import com.yue.jobcomparer.entity.Cv;
 import com.yue.jobcomparer.exception.DuplicateCvNameException;
