@@ -126,7 +126,9 @@ public class AnalysisService {
                 .replace("{job_title}", job.getJobTitle())
                 .replace("{job_description}", job.getJobDescription());
 
-        AiClient aiClient = aiClientResolver.resolve(defaultProvider);
+        AiProvider aiProvider = request.getAiProvider() != null ? request.getAiProvider() : defaultProvider;
+
+        AiClient aiClient = aiClientResolver.resolve(aiProvider);
         String aiResponse = aiClient.chat(prompt);
 
         log.debug("AI raw response: {}", aiResponse);
@@ -143,6 +145,7 @@ public class AnalysisService {
 
         Analysis analysis = Analysis.builder()
                 .userId(userId)
+                .aiProvider(aiProvider)
                 .cvId(cv.getId())
                 .jobId(job.getId())
                 .matchScore(result.getMatchScore())
@@ -181,6 +184,7 @@ public class AnalysisService {
     private AnalysisResponse toResponse(Analysis analysis) {
         return AnalysisResponse.builder()
                 .id(analysis.getId())
+                .aiProvider(analysis.getAiProvider())
                 .cvId(analysis.getCvId())
                 .jobId(analysis.getJobId())
                 .matchScore(analysis.getMatchScore())

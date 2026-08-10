@@ -1,5 +1,6 @@
 package com.yue.jobcomparer.entity;
 
+import com.yue.jobcomparer.ai.AiProvider;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -27,6 +28,10 @@ public class Analysis {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "ai_provider", nullable = false, length = 32)
+    private AiProvider aiProvider;
 
     @Column(name = "user_id", nullable = false)
     private Long userId;

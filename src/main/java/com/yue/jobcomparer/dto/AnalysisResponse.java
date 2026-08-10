@@ -1,5 +1,6 @@
 package com.yue.jobcomparer.dto;
 
+import com.yue.jobcomparer.ai.AiProvider;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,6 +15,7 @@ import java.time.LocalDateTime;
 public class AnalysisResponse {
 
     private Long id;
+    private AiProvider aiProvider;
     private Long cvId;
     private Long jobId;
     private Integer matchScore;
