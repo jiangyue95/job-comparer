@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -150,6 +151,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleFieldSizeLimit(
             FileSizeLimitException ex, HttpServletRequest request) {
         return buildError(HttpStatus.PAYLOAD_TOO_LARGE, ex.getMessage(), request);
+    }
+
+    // 404 - unknown resource paths
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResourceFound(
+            Exception ex, HttpServletRequest request) {
+        return buildError(HttpStatus.NOT_FOUND, "Resource not found", request);
     }
 
     // 500 - catch-all for unexpected exceptions
