@@ -9,7 +9,7 @@ public class QuotaLimits {
     private Integer maxJobs;
     private Integer dailyAnalyses;
 
-    private Boolean unlimited;
+    private boolean unlimited;
 
     public boolean isUnlimited() {
         return unlimited;

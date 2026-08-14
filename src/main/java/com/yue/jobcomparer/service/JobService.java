@@ -1,5 +1,6 @@
 package com.yue.jobcomparer.service;
 
+import com.yue.jobcomparer.config.QuotaProperties;
 import com.yue.jobcomparer.dto.*;
 import com.yue.jobcomparer.entity.AuditAction;
 import com.yue.jobcomparer.entity.Job;
@@ -8,9 +9,8 @@ import com.yue.jobcomparer.entity.User;
 import com.yue.jobcomparer.exception.JobLimitExceededException;
 import com.yue.jobcomparer.exception.JobNotFoundException;
 import com.yue.jobcomparer.repository.JobRepository;
-import com.yue.jobcomparer.repository.UserRepository;
+import com.yue.jobcomparer.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,20 +21,21 @@ import java.util.List;
 @RequiredArgsConstructor
 public class JobService {
 
-    private static final int MAX_JOB_PER_USER = 50;
-
     private final JobRepository jobRepository;
-    private final UserRepository userRepository;
+    private final SecurityUtils securityUtils;
+    private final QuotaProperties quotaProperties;
     private final AuditLogService auditLogService;
 
     @Transactional
     public JobDetailResponse create(JobCreateRequest request) {
-        Long userId = getCurrentUserId();
+        User user = securityUtils.getCurrentUser();
+        Long userId = user.getId();
+        int maxJobs = quotaProperties.limitsFor(user.getPlan()).getMaxJobs();
 
         long currentCount = jobRepository.countByUserIdAndDeletedAtIsNull(userId);
-        if (currentCount >= MAX_JOB_PER_USER) {
+        if (currentCount >= maxJobs) {
             throw new JobLimitExceededException(
-                    "You can have at most " + MAX_JOB_PER_USER + " active jobs. " +
+                    "You can have at most " + maxJobs + " active jobs. " +
                             "Please delete one before creating a new one."
             );
         }
@@ -58,7 +59,7 @@ public class JobService {
     }
 
     public List<JobListItemResponse> list(JobStatus statusFilter) {
-        Long userId = getCurrentUserId();
+        Long userId = securityUtils.getCurrentUserId();
 
         List<Job> jobs = (statusFilter == null)
                 ? jobRepository.findAllByUserIdAndDeletedAtIsNullOrderByCreatedAtDesc(userId)
@@ -70,15 +71,17 @@ public class JobService {
     }
 
     public JobDetailResponse getById(Long jobId) {
-        Long userId = getCurrentUserId();
+        Long userId = securityUtils.getCurrentUserId();
         Job job = jobRepository.findByIdAndUserIdAndDeletedAtIsNull(jobId, userId)
                 .orElseThrow(() -> new JobNotFoundException("Job not found: " + jobId));
+
         return toDetailResponse(job);
     }
 
     @Transactional
     public JobDetailResponse update(Long jobId, JobUpdateRequest request) {
-        Long userId = getCurrentUserId();
+        Long userId = securityUtils.getCurrentUserId();
+
         Job job = jobRepository.findByIdAndUserIdAndDeletedAtIsNull(jobId, userId)
                 .orElseThrow(() -> new JobNotFoundException("Job not found: " + jobId));
 
@@ -99,7 +102,7 @@ public class JobService {
 
     @Transactional
     public JobDetailResponse updateStatus(Long jobId, JobUpdateStatusRequest request) {
-        Long userId = getCurrentUserId();
+        Long userId = securityUtils.getCurrentUserId();
         Job job = jobRepository.findByIdAndUserIdAndDeletedAtIsNull(jobId, userId)
                 .orElseThrow(() -> new JobNotFoundException("Job not found: " + jobId));
 
@@ -113,7 +116,7 @@ public class JobService {
 
     @Transactional
     public void delete(Long jobId) {
-        Long userId = getCurrentUserId();
+        Long userId = securityUtils.getCurrentUserId();
         Job job = jobRepository.findByIdAndUserIdAndDeletedAtIsNull(jobId, userId)
                 .orElseThrow(() -> new JobNotFoundException("Job not found: " + jobId));
 
@@ -121,13 +124,6 @@ public class JobService {
         jobRepository.save(job);
 
         auditLogService.recordResourceEvent(AuditAction.JOB_DELETE, job.getId());
-    }
-
-    private Long getCurrentUserId() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalStateException("Authenticated user not found in DB: " + email));
-        return user.getId();
     }
 
     private JobDetailResponse toDetailResponse(Job job) {

@@ -39,13 +39,12 @@ public class QuotaProperties {
                                 + " (expected under app.quota.limits." + plan.name().toLowerCase() + ")");
             }
 
-            if (!quotaLimits.hasAllLimits()) {
+            if (!quotaLimits.isUnlimited() && !quotaLimits.hasAllLimits()) {
                 throw new IllegalStateException(
                         "Incomplete quota configuration for plan: " + plan
                                 + " (expected max-cvs, max-jobs and daily-analyses under app.quota.limits."
-                                + plan.name().toLowerCase() + ", unlimited: true)");
+                                + plan.name().toLowerCase() + ", or unlimited: true)");
             }
-
         }
     }
 }

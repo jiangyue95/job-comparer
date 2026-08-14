@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yue.jobcomparer.ai.AiClient;
 import com.yue.jobcomparer.ai.AiClientResolver;
 import com.yue.jobcomparer.ai.AiProvider;
+import com.yue.jobcomparer.config.QuotaProperties;
 import com.yue.jobcomparer.dto.AiAnalysisResult;
 import com.yue.jobcomparer.dto.AnalysisCreateRequest;
 import com.yue.jobcomparer.dto.AnalysisResponse;
@@ -36,9 +37,7 @@ public class AnalysisService {
     private final SecurityUtils securityUtils;
     private final AnalysisPersistenceService analysisPersistenceService;
     private final AuditLogService auditLogService;
-
-    @Value("${app.analysis.daily-limit-per-user}")
-    private int dailyLimitPerUser;
+    private final QuotaProperties quotaProperties;
 
     @Value("${app.analysis.daily-limit-global}")
     private int dailyLimitGlobal;
@@ -54,7 +53,8 @@ public class AnalysisService {
             ObjectMapper objectMapper,
             SecurityUtils securityUtils,
             AnalysisPersistenceService analysisPersistenceService,
-            AuditLogService auditLogService) {
+            AuditLogService auditLogService,
+            QuotaProperties quotaProperties) {
         this.aiClientResolver = aiClientResolver;
         this.cvRepository = cvRepository;
         this.jobRepository = jobRepository;
@@ -63,6 +63,7 @@ public class AnalysisService {
         this.securityUtils = securityUtils;
         this.analysisPersistenceService = analysisPersistenceService;
         this.auditLogService = auditLogService;
+        this.quotaProperties = quotaProperties;
     }
 
     private static final String PROMPT_TEMPLATE = """
@@ -96,23 +97,27 @@ public class AnalysisService {
                 """;
 
     public AnalysisResponse analyze(AnalysisCreateRequest request) {
+        User user = securityUtils.getCurrentUser();
+        Long userId = user.getId();
 
-        Long userId = securityUtils.getCurrentUserId();
-
-        // Limit checking
         LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
 
+        // Global cap: a cost circuit breaker, deliberately not exempted by any plan.
         long globalCount = analysisRepository.countByCreatedAtAfter(startOfToday);
+
         if (globalCount >= dailyLimitGlobal) {
             throw new RateLimitExceededException(
                     "The service has reached its daily capacity. Please try again tomorrow.");
         }
 
+        // Per-user cap: a fairness rule, scoped to the user's plan
+        int dailyLimit = quotaProperties.limitsFor(user.getPlan()).getDailyAnalyses();
         long userCount = analysisRepository.countByUserIdAndCreatedAtAfter(userId, startOfToday);
-        if (userCount >= dailyLimitPerUser) {
+
+        if (userCount >= dailyLimit) {
             throw new RateLimitExceededException(
                     "You have reached your daily limit of "
-                            + dailyLimitPerUser + " analyses. Please try again tomorrow.");
+                            + dailyLimit + " analyses. Please try again tomorrow.");
         }
 
         Cv cv = cvRepository.findByIdAndUserIdAndDeletedAtIsNull(request.getCvId(), userId)
