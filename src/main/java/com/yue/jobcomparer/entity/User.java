@@ -42,7 +42,7 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private Plan plan = Plan.PREMIUM;
+    private Plan plan = Plan.FREE;
 
     @Column(nullable = false, updatable = false)
     @CreationTimestamp
