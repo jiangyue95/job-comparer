@@ -39,8 +39,15 @@ app:
   ai:
     default-provider: anthropic
   analysis:
-    daily-limit-per-user: 3
     daily-limit-global: 10
+  quota:
+    limits:
+      free:
+        max-cvs: 10
+        max-jobs: 50
+        daily-analyses: 3
+      premium:
+        unlimited: true
 
   admin:
     email: ${APP_ADMIN_EMAIL}
