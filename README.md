@@ -23,7 +23,8 @@ and deployed on AWS EC2 behind Nginx with HTTPS.
 (match score, matched/missing skills, feedback)
 - **Analysis history** - review and delete past analyses
 - **Public landing page** - a live example analysis visible without signing up
-- **Rate limiting** - per-user and global daily limits to control AI cost
+- **Per-plan quotas** - `FREE` and `PREMIUM` tiers with per-user limits on CVs,
+jobs, and daily analyses, plus a global daily cap on AI spend
 
 ## Tech Stack
 
@@ -84,12 +85,24 @@ onto the analysis row at creation time. The result fields (score, skills, feedba
 were already point-in-time data, so the record stays self-contained even if the 
 original CV or Job is later edited or deleted.
 
-### Rate limiting to control AI cost
-Each analysis calls a paid LLM API, so the endpoint enforces per-user and global 
-daily limits, checked *before* the API call so rejected requests cost nothing. The 
-count is date-based (resets daily without a scheduler) and includes soft-deleted 
-analyses - deleting a history entry shouldn't refund a request the user already paid
-for, since the cost was incurred at creation.
+### Per-plan quotas and the global cost cap
+Each analysis calls a paid LLM API, so quotas are enforced *before* the call and a 
+rejected request costs nothing. Users are capped on CVs, jobs, and analyses per day,
+and each user carries a plan (`FREE` or `PREMIUM`) that determines those allowances -
+kept as a field of its own rather than folded into the role, since a role says what a
+user may do and a plan says how much they may consume.
+
+The two daily limits are deliberately not the same kind of rule. The per-user limit is
+about fairness between accounts, so a paid tier can be exempted from it. The global
+limit protects the service's own spend: a breaker with an exception path is not a 
+breaker, so no tier bypasses it.
+
+The numbers themselves live in configuration rather than in code, and are checked at 
+startup against the `Plan` enum, so a missing or misspelled tier fails the boot rather
+than the first request that needs it. Counting is date-based, which resets daily
+without a scheduler, and includes soft-deleted analyses - deleting a history entry
+shouldn't refund a request the user already paid for, since the cost was incurred at
+creation.
 
 ### Externalized configuration and containerization
 Secrets (DB credentials, JWT secret, API key) are injected via environment 
