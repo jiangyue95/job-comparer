@@ -34,6 +34,8 @@ spring:
     multipart:
       max-file-size: 2MB    # maximum size of a single file
       max-request-size: 2MB # maximum size of the entire request
+  lifecycle:
+    timeout-per-shutdown-phase: 60s
 
 app:
   ai:
@@ -48,6 +50,12 @@ app:
         daily-analyses: 3
       premium:
         unlimited: true
+  async:
+    analysis:
+      core-pool-size: 2
+      max-pool-size: 2
+      queue-capacity: 50
+      thread-name-prefix: "analysis-"
 
   admin:
     email: ${APP_ADMIN_EMAIL}
@@ -63,3 +71,4 @@ aws:
 
 server:
   forward-headers-strategy: framework
+  shutdown: graceful
