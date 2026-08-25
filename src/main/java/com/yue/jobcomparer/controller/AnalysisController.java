@@ -21,8 +21,8 @@ public class AnalysisController {
 
     @PostMapping
     public ResponseEntity<AnalysisResponse> create(@Valid @RequestBody AnalysisCreateRequest request) {
-        AnalysisResponse response = analysisService.analyze(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        AnalysisResponse response = analysisService.submit(request);
+        return ResponseEntity.accepted().body(response);
     }
 
     @GetMapping

@@ -1,6 +1,8 @@
 package com.yue.jobcomparer.dto;
 
 import com.yue.jobcomparer.ai.AiProvider;
+import com.yue.jobcomparer.entity.AnalysisFailureReason;
+import com.yue.jobcomparer.entity.AnalysisStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,5 +27,7 @@ public class AnalysisResponse {
     private String cvName;
     private String jobTitle;
     private String company;
+    private AnalysisStatus status;
+    private AnalysisFailureReason failureReason;
     private LocalDateTime createdAt;
 }
