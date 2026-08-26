@@ -5,5 +5,6 @@ public enum AnalysisFailureReason {
     TIMEOUT,
     PARSE_ERROR,
     INPUT_UNAVAILABLE,
+    INTERRUPTED,
     INTERNAL_ERROR
 }

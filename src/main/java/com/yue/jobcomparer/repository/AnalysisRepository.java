@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,4 +29,7 @@ public interface AnalysisRepository extends JpaRepository<Analysis, Long> {
     // Loads a pending analysis for background execution. Not scoped by
     // deletedAt: ownership was already verified at submission time.
     Optional<Analysis> findByIdAndUserId(Long id, Long userId);
+
+    // Finds analyses left in a non-terminal state, used to clean up orphans on startup
+    List<Analysis> findByStatusIn(Collection<AnalysisStatus> statuses);
 }
