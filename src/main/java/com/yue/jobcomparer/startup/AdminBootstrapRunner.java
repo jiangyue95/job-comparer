@@ -1,4 +1,4 @@
-package com.yue.jobcomparer.config;
+package com.yue.jobcomparer.startup;
 
 import com.yue.jobcomparer.entity.Role;
 import com.yue.jobcomparer.repository.UserRepository;
