@@ -2,6 +2,7 @@ package com.yue.jobcomparer.controller;
 
 import com.yue.jobcomparer.dto.AnalysisCreateRequest;
 import com.yue.jobcomparer.dto.AnalysisResponse;
+import com.yue.jobcomparer.dto.AnalysisSummaryResponse;
 import com.yue.jobcomparer.service.AnalysisService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,11 @@ import java.util.List;
 public class AnalysisController {
 
     private final AnalysisService analysisService;
+
+    @GetMapping("/summary")
+    public ResponseEntity<AnalysisSummaryResponse> getSummary() {
+        return ResponseEntity.ok(analysisService.getSummary());
+    }
 
     @PostMapping
     public ResponseEntity<AnalysisResponse> create(@Valid @RequestBody AnalysisCreateRequest request) {
