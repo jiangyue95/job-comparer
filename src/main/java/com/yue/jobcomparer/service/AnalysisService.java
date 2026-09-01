@@ -126,6 +126,17 @@ public class AnalysisService {
     }
 
     @Transactional
+    public void markViewed(Long id) {
+        Long userId = securityUtils.getCurrentUserId();
+        Analysis analysis = analysisRepository.findByIdAndUserIdAndDeletedAtIsNull(id, userId)
+                .orElseThrow(() -> new AnalysisNotFoundException("Analysis not found: " + id));
+
+        if (analysis.getViewedAt() == null) {
+            analysis.setViewedAt(LocalDateTime.now());
+        }
+    }
+
+    @Transactional
     public void deleteAnalysis(Long id) {
         Long userId = securityUtils.getCurrentUserId();
         Analysis analysis = analysisRepository.findByIdAndUserIdAndDeletedAtIsNull(id, userId)
@@ -152,6 +163,7 @@ public class AnalysisService {
                 .status(analysis.getStatus())
                 .failureReason(analysis.getFailureReason())
                 .createdAt(analysis.getCreatedAt())
+                .viewedAt(analysis.getViewedAt())
                 .build();
     }
 }

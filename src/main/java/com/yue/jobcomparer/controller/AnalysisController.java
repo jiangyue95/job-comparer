@@ -2,13 +2,18 @@ package com.yue.jobcomparer.controller;
 
 import com.yue.jobcomparer.dto.AnalysisCreateRequest;
 import com.yue.jobcomparer.dto.AnalysisResponse;
-import com.yue.jobcomparer.repository.AnalysisRepository;
 import com.yue.jobcomparer.service.AnalysisService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -36,4 +41,9 @@ public class AnalysisController {
         return ResponseEntity.noContent().build();
     }
 
+    @PatchMapping("/{id}/viewed")
+    public ResponseEntity<Void> markViewed(@PathVariable Long id) {
+        analysisService.markViewed(id);
+        return ResponseEntity.noContent().build();
+    }
 }
