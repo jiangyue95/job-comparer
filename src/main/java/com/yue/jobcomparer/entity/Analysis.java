@@ -46,7 +46,7 @@ public class Analysis {
 
     // === Below is the "business payload" carried by this association table (combined with AI output) ===
 
-    @Column(nullable = false)
+    @Column
     private Integer matchScore;
 
     @Column(columnDefinition = "TEXT")
@@ -71,6 +71,21 @@ public class Analysis {
     @Column(nullable = false, updatable = false)
     @CreationTimestamp
     private LocalDateTime createdAt;
+
+    // === Async processing state ===
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 32)
+    private AnalysisStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "failure_reason", length = 32)
+    private AnalysisFailureReason failureReason;
+
+    @Column(name = "started_at")
+    private LocalDateTime startedAt;
+
+    @Column(name = "finished_at")
+    private LocalDateTime finishedAt;
 
     private LocalDateTime deletedAt;
 }

@@ -126,18 +126,6 @@ public class GlobalExceptionHandler {
         return buildError(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage(), request);
     }
 
-    // 502 - AI response parse error
-    @ExceptionHandler(AiResponseParseException.class)
-    public ResponseEntity<ErrorResponse> handleAiResponseParseException(
-            AiResponseParseException ex, HttpServletRequest request) {
-        log.error("AI response parse error", ex);
-        return buildError(
-                HttpStatus.BAD_GATEWAY,
-                "AI service returned an invalid response. Please try again.",
-                request
-        );
-    }
-
     // 422 - PDF parsing failed
     @ExceptionHandler(PdfParsingException.class)
     public ResponseEntity<ErrorResponse> handlePdfParsing(

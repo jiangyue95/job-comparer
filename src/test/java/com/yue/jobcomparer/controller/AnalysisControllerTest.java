@@ -2,7 +2,6 @@ package com.yue.jobcomparer.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yue.jobcomparer.AbstractIntegrationTest;
-import com.yue.jobcomparer.ai.AiClient;
 import com.yue.jobcomparer.ai.AiClientResolver;
 import com.yue.jobcomparer.ai.AiProvider;
 import com.yue.jobcomparer.dto.AnalysisCreateRequest;
@@ -17,7 +16,6 @@ import com.yue.jobcomparer.repository.UserRepository;
 import com.yue.jobcomparer.util.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,10 +24,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -48,21 +42,10 @@ public class AnalysisControllerTest extends AbstractIntegrationTest {
 
     @MockitoBean private AiClientResolver aiClientResolver;
 
-    private final AiClient mockAiClient = Mockito.mock(AiClient.class);
-
     private String token;
     private Long userId;
     private Long cvId;
     private Long jobId;
-
-    private static final String FAKE_AI_JSON = """
-        {
-          "matchScore": 75,
-          "matchedSkills": "Java, Spring Boot, PostgreSQL",
-          "missingSkills": "Kafka, Docker",
-          "actionableFeedback": "Add Kafka and Docker to your projects."
-        }
-        """;
 
     @BeforeEach
     void setUp() {
@@ -97,17 +80,12 @@ public class AnalysisControllerTest extends AbstractIntegrationTest {
                 .build();
         jobRepository.save(job);
         jobId = job.getId();
-
-        // Stub the resolver to always return a mocked AiClient, and stub that client
-        // to return a fake JSON response by default
-        when(aiClientResolver.resolve(any())).thenReturn(mockAiClient);
-        when(mockAiClient.chat(anyString())).thenReturn(FAKE_AI_JSON);
     }
 
     // === Happy path ===
 
     @Test
-    void create_shouldReturn201_andPersistAnalysis() throws Exception {
+    void create_shouldReturn202_andPersistPendingAnalysis() throws Exception {
         AnalysisCreateRequest request = new AnalysisCreateRequest();
         request.setCvId(cvId);
         request.setJobId(jobId);
@@ -116,15 +94,17 @@ public class AnalysisControllerTest extends AbstractIntegrationTest {
                         .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.aiProvider").value("ANTHROPIC"));
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.aiProvider").value("ANTHROPIC"))
+                .andExpect(jsonPath("$.status").value("PENDING"))
+                .andExpect(jsonPath("$.matchScore").isEmpty());
 
         // Verify database state
         assertThat(analysisRepository.findAll()).hasSize(1);
     }
 
     @Test
-    void create_withExplicitProvider_shouldUseAndPersistIt() throws Exception {
+    void create_withExplicitProvider_shouldPersistIt() throws Exception {
         AnalysisCreateRequest request = new AnalysisCreateRequest();
         request.setAiProvider(AiProvider.DEEPSEEK);
         request.setCvId(cvId);
@@ -134,18 +114,13 @@ public class AnalysisControllerTest extends AbstractIntegrationTest {
                         .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
+                .andExpect(status().isAccepted())
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.aiProvider").value("DEEPSEEK"))
                 .andExpect(jsonPath("$.cvId").value(cvId))
                 .andExpect(jsonPath("$.jobId").value(jobId))
-                .andExpect(jsonPath("$.matchScore").value(75))
-                .andExpect(jsonPath("$.matchedSkills").value("Java, Spring Boot, PostgreSQL"))
-                .andExpect(jsonPath("$.missingSkills").value("Kafka, Docker"))
-                .andExpect(jsonPath("$.actionableFeedback").value("Add Kafka and Docker to your projects."))
+                .andExpect(jsonPath("$.status").value("PENDING"))
                 .andExpect(jsonPath("$.createdAt").exists());
-
-        verify(aiClientResolver).resolve(AiProvider.DEEPSEEK);
 
         // Verify database state
         assertThat(analysisRepository.findAll()).hasSize(1);
@@ -315,23 +290,5 @@ public class AnalysisControllerTest extends AbstractIntegrationTest {
     void create_withoutToken_shouldReturn401() throws Exception {
         mockMvc.perform(post("/api/analyses"))
                 .andExpect(status().isUnauthorized());
-    }
-
-    // AI failure path
-
-    @Test
-    void create_whenAiReturnsMalformedJson_shouldReturn502() throws Exception {
-        // Override default stub to simulate AI returning malformed output
-        when(mockAiClient.chat(anyString())).thenReturn("not a valid json at all");
-
-        AnalysisCreateRequest request = new AnalysisCreateRequest();
-        request.setCvId(cvId);
-        request.setJobId(jobId);
-
-        mockMvc.perform(post("/api/analyses")
-                        .header("Authorization", token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadGateway());
     }
 }
