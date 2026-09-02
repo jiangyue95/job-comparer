@@ -5,6 +5,8 @@ import com.yue.jobcomparer.AbstractIntegrationTest;
 import com.yue.jobcomparer.ai.AiClientResolver;
 import com.yue.jobcomparer.ai.AiProvider;
 import com.yue.jobcomparer.dto.AnalysisCreateRequest;
+import com.yue.jobcomparer.entity.Analysis;
+import com.yue.jobcomparer.entity.AnalysisStatus;
 import com.yue.jobcomparer.entity.Cv;
 import com.yue.jobcomparer.entity.Job;
 import com.yue.jobcomparer.entity.JobStatus;
@@ -23,7 +25,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -31,16 +37,25 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 public class AnalysisControllerTest extends AbstractIntegrationTest {
 
-    @Autowired private MockMvc mockMvc;
-    @Autowired private ObjectMapper objectMapper;
-    @Autowired private UserRepository userRepository;
-    @Autowired private CvRepository cvRepository;
-    @Autowired private JobRepository jobRepository;
-    @Autowired private AnalysisRepository analysisRepository;
-    @Autowired private PasswordEncoder passwordEncoder;
-    @Autowired private JwtUtil jwtUtil;
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private ObjectMapper objectMapper;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private CvRepository cvRepository;
+    @Autowired
+    private JobRepository jobRepository;
+    @Autowired
+    private AnalysisRepository analysisRepository;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+    @Autowired
+    private JwtUtil jwtUtil;
 
-    @MockitoBean private AiClientResolver aiClientResolver;
+    @MockitoBean
+    private AiClientResolver aiClientResolver;
 
     private String token;
     private Long userId;
@@ -80,6 +95,22 @@ public class AnalysisControllerTest extends AbstractIntegrationTest {
                 .build();
         jobRepository.save(job);
         jobId = job.getId();
+    }
+
+    private Analysis persistAnalysis(AnalysisStatus status, LocalDateTime viewedAt, LocalDateTime deletedAt) {
+        return analysisRepository.save(Analysis.builder()
+                .userId(userId)
+                .cvId(cvId)
+                .jobId(jobId)
+                .aiProvider(AiProvider.ANTHROPIC)
+                .status(status)
+                .viewedAt(viewedAt)
+                .matchScore(status == AnalysisStatus.COMPLETED ? 75 : null)
+                .cvName("CV A")
+                .jobTitle("Job A")
+                .company("Company A")
+                .deletedAt(deletedAt)
+                .build());
     }
 
     // === Happy path ===
@@ -290,5 +321,55 @@ public class AnalysisControllerTest extends AbstractIntegrationTest {
     void create_withoutToken_shouldReturn401() throws Exception {
         mockMvc.perform(post("/api/analyses"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    // viewed state
+    @Test
+    void markViewed_shouldSetViewedAt_whenNotViewedBefore() throws Exception {
+        Analysis analysis = persistAnalysis(AnalysisStatus.COMPLETED, null, null);
+
+        mockMvc.perform(patch("/api/analyses/{id}/viewed", analysis.getId())
+                        .header("Authorization", token))
+                .andExpect(status().isNoContent());
+
+        assertThat(analysisRepository.findById(analysis.getId()))
+                .get()
+                .extracting(Analysis::getViewedAt)
+                .isNotNull();
+    }
+
+    // viewed idempotent testing
+    @Test
+    void markViewed_shouldNotOverwriteViewedAt_whenAlreadyViewed() throws Exception {
+        LocalDateTime firstViewedAt = LocalDateTime.now().minusDays(1);
+        Analysis analysis = persistAnalysis(AnalysisStatus.COMPLETED, firstViewedAt, null);
+
+        mockMvc.perform(patch("/api/analyses/{id}/viewed", analysis.getId())
+                        .header("Authorization", token))
+                .andExpect(status().isNoContent());
+
+        Analysis reloaded = analysisRepository.findById(analysis.getId()).orElseThrow();
+        assertThat(reloaded.getViewedAt()).isEqualTo(firstViewedAt);
+    }
+
+    // summary
+    @Test
+    void summary_shouldCountOnlyUnreadTerminalAndActiveAnalyses() throws Exception {
+        // unread
+        persistAnalysis(AnalysisStatus.COMPLETED, null, null);
+        // already viewed
+        persistAnalysis(AnalysisStatus.COMPLETED, LocalDateTime.now(), null);
+        // soft-deleted
+        persistAnalysis(AnalysisStatus.COMPLETED, null, LocalDateTime.now());
+        // active
+        persistAnalysis(AnalysisStatus.PROCESSING, null, null);
+        // unread
+        persistAnalysis(AnalysisStatus.FAILED, null, null);
+
+        mockMvc.perform(get("/api/analyses/summary")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.unread").value(2))
+                .andExpect(jsonPath("$.active").value(1));
     }
 }

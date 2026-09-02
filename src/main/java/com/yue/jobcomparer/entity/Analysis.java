@@ -87,5 +87,8 @@ public class Analysis {
     @Column(name = "finished_at")
     private LocalDateTime finishedAt;
 
+    @Column(name = "viewed_at")
+    private LocalDateTime viewedAt;
+
     private LocalDateTime deletedAt;
 }

@@ -4,6 +4,7 @@ import com.yue.jobcomparer.ai.AiProvider;
 import com.yue.jobcomparer.config.QuotaProperties;
 import com.yue.jobcomparer.dto.AnalysisCreateRequest;
 import com.yue.jobcomparer.dto.AnalysisResponse;
+import com.yue.jobcomparer.dto.AnalysisSummaryResponse;
 import com.yue.jobcomparer.entity.Analysis;
 import com.yue.jobcomparer.entity.AnalysisStatus;
 import com.yue.jobcomparer.entity.AuditAction;
@@ -26,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -126,6 +128,17 @@ public class AnalysisService {
     }
 
     @Transactional
+    public void markViewed(Long id) {
+        Long userId = securityUtils.getCurrentUserId();
+        Analysis analysis = analysisRepository.findByIdAndUserIdAndDeletedAtIsNull(id, userId)
+                .orElseThrow(() -> new AnalysisNotFoundException("Analysis not found: " + id));
+
+        if (analysis.getViewedAt() == null) {
+            analysis.setViewedAt(LocalDateTime.now());
+        }
+    }
+
+    @Transactional
     public void deleteAnalysis(Long id) {
         Long userId = securityUtils.getCurrentUserId();
         Analysis analysis = analysisRepository.findByIdAndUserIdAndDeletedAtIsNull(id, userId)
@@ -134,6 +147,25 @@ public class AnalysisService {
         analysisRepository.save(analysis);
 
         auditLogService.recordResourceEvent(AuditAction.ANALYSIS_DELETE, id);
+    }
+
+    @Transactional(readOnly = true)
+    public AnalysisSummaryResponse getSummary() {
+        Long userId = securityUtils.getCurrentUserId();
+
+        List<AnalysisStatus> terminal = Arrays.stream(AnalysisStatus.values())
+                .filter(AnalysisStatus::isTerminal)
+                .toList();
+        List<AnalysisStatus> nonTerminal = Arrays.stream(AnalysisStatus.values())
+                .filter(status -> !status.isTerminal())
+                .toList();
+
+        return AnalysisSummaryResponse.builder()
+                .unread(analysisRepository
+                        .countByUserIdAndDeletedAtIsNullAndViewedAtIsNullAndStatusIn(userId, terminal))
+                .active(analysisRepository
+                        .countByUserIdAndDeletedAtIsNullAndStatusIn(userId, nonTerminal))
+                .build();
     }
 
     private AnalysisResponse toResponse(Analysis analysis) {
@@ -152,6 +184,7 @@ public class AnalysisService {
                 .status(analysis.getStatus())
                 .failureReason(analysis.getFailureReason())
                 .createdAt(analysis.getCreatedAt())
+                .viewedAt(analysis.getViewedAt())
                 .build();
     }
 }

@@ -32,4 +32,12 @@ public interface AnalysisRepository extends JpaRepository<Analysis, Long> {
 
     // Finds analyses left in a non-terminal state, used to clean up orphans on startup
     List<Analysis> findByStatusIn(Collection<AnalysisStatus> statuses);
+
+    // Terminal analyses the user has not opened yet
+    long countByUserIdAndDeletedAtIsNullAndViewedAtIsNullAndStatusIn(
+            Long userId, Collection<AnalysisStatus> statuses);
+
+    // Analyses still queued or running
+    long countByUserIdAndDeletedAtIsNullAndStatusIn(
+            Long userId, Collection<AnalysisStatus> statuses);
 }

@@ -30,4 +30,5 @@ public class AnalysisResponse {
     private AnalysisStatus status;
     private AnalysisFailureReason failureReason;
     private LocalDateTime createdAt;
+    private LocalDateTime viewedAt;
 }
