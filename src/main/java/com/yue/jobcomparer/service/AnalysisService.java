@@ -127,6 +127,14 @@ public class AnalysisService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public AnalysisResponse getById(Long id) {
+        Long userId = securityUtils.getCurrentUserId();
+        Analysis analysis = analysisRepository.findByIdAndUserIdAndDeletedAtIsNull(id, userId)
+                .orElseThrow(() -> new AnalysisNotFoundException("Analysis not found: " + id));
+        return toResponse(analysis);
+    }
+
     @Transactional
     public void markViewed(Long id) {
         Long userId = securityUtils.getCurrentUserId();

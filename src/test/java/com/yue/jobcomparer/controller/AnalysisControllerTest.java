@@ -372,4 +372,46 @@ public class AnalysisControllerTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.unread").value(2))
                 .andExpect(jsonPath("$.active").value(1));
     }
+
+    // get by id
+
+    @Test
+    void getById_shouldReturnAnalysis_whenOwnedByCaller() throws Exception {
+        Analysis analysis = persistAnalysis(AnalysisStatus.COMPLETED, null, null);
+
+        mockMvc.perform(get("/api/analyses/{id}", analysis.getId())
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(analysis.getId()))
+                .andExpect(jsonPath("$.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.matchScore").value(75));
+    }
+
+    @Test
+    void getById_shouldReturnPendingShell_whenStillRunning() throws Exception {
+        Analysis analysis = persistAnalysis(AnalysisStatus.PENDING, null, null);
+
+        mockMvc.perform(get("/api/analyses/{id}", analysis.getId())
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("PENDING"))
+                .andExpect(jsonPath("$.matchScore").isEmpty());
+    }
+
+    @Test
+    void getById_withAnotherUsersAnalysis_shouldReturn404() throws Exception {
+        Analysis analysis = persistAnalysis(AnalysisStatus.COMPLETED, null, null);
+
+        User userB = User.builder()
+                .email("userB@example.com")
+                .username("testuserb")
+                .password(passwordEncoder.encode("password123"))
+                .build();
+        userRepository.save(userB);
+        String tokenB = "Bearer " + jwtUtil.generateToken(userB.getEmail());
+
+        mockMvc.perform(get("/api/analyses/{id}", analysis.getId())
+                        .header("Authorization", tokenB))
+                .andExpect(status().isNotFound());
+    }
 }
