@@ -41,6 +41,11 @@ public class AnalysisController {
         return ResponseEntity.ok(analysisService.getHistory());
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<AnalysisResponse> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(analysisService.getById(id));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         analysisService.deleteAnalysis(id);
